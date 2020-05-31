@@ -1,0 +1,157 @@
+<html>
+
+<head>
+
+    <title>Dbtify</title>
+    <link href="{{url_for('static', filename = 'css/bootstrap.min.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename = 'css/style.css')}}" rel="stylesheet">
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="well text-center">
+            {%for line in user%}
+            <h1>Welcome {{line.1}}</h1>
+
+        </div>
+        {%with messages = get_flashed_messages()%}
+
+        {%if messages%}
+
+        {% for message in messages %}
+
+        <div class="alert alert-success alert-dismissable" role="alert">
+
+            <button type="button" class="close" data-dismiss="alert" aria-label="close">
+
+                <span aria-hidden="true">&times;</span>
+
+            </button>
+            {{message}}
+        </div>
+        {%endfor%}
+        {%endif%}
+        {%endwith%}
+
+        <div class="mcontainer">
+            <h2>Songs</h2>
+            <table class="table table-striped">
+                <tr>
+                    <th>Id</th>
+                    <th>Song Name</th>
+                    <th>Album Name</th>
+                    <th>Likes</th>
+                    <th>Liked</th>
+                    <th>Like/Dislike</th>
+                </tr>
+                {% for row in song %}
+                <tr>
+                    <td>{{row.0}}</td>
+                    <td>{{row.1}}</td>
+                    <td>{{row.2}}</td>
+                    <td>{{row.3}}</td>
+                    <td>{{row.4}}</td>
+                    <td>
+                        <a href="/like/{{line.0}}/{{row.0}}" class="btn btn-warning btn-xs" id="likebtn"
+                            data-toggle="modal">Like</a>
+                        <a href="/" class="btn btn-danger btn-xs"
+                            onclick="return confirm('Are You Sure For Delete?')">Dislike</a>
+                    </td>
+                </tr>
+                {% endfor  %}
+            </table>
+        </div>
+
+        <div class="mcontainer">
+            <h2>Albums</h2>
+            <table class="table table-striped">
+                <tr>
+                    <th>Id</th>
+                    <th>Genre</th>
+                    <th>Album Name</th>
+                    <th>Artist Name</th>
+                    <th>Artist Surname</th>
+                    <th>Likes</th>
+                    <th>See Album</th>
+                    <th>Like/Dislike</th>
+                </tr>
+                {% for row in album %}
+                <tr>
+                    <td>{{row.0}}</td>
+                    <td>{{row.1}}</td>
+                    <td>{{row.2}}</td>
+                    <td>{{row.3}}</td>
+                    <td>{{row.4}}</td>
+                    <td>{{row.5}}</td>
+                    <td>
+                        <a href="/album/{{row.0}}" class="btn btn-info btn-xs">See Album</a>
+                    </td>
+                    <td>
+                        <a href="/albumsubs/{{line.0}}/{{row.0}}" class="btn btn-warning btn-xs">Like</a>
+                        <a href="/" class="btn btn-danger btn-xs"
+                            onclick="return confirm('Are You Sure For Delete?')">Dislike</a>
+
+                    </td>
+                </tr>
+                {%endfor%}
+            </table>
+        </div>
+
+        <div class="mcontainer">
+            <h2>Artists</h2>
+            <table class="table table-striped">
+                <tr>
+                    <th>Id</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Likes</th>
+                    <th>See Page</th>
+                </tr>
+                {% for row in artist %}
+                <tr>
+                    <td>{{row.0}}</td>
+                    <td>{{row.1}}</td>
+                    <td>{{row.2}}</td>
+                    <td>{{row.3}}</td>
+                    <td>
+                        <a href="/artist/{{row.0}}" class="btn btn-info btn-xs">See Artist</a>
+                    </td>
+                </tr>
+                {%endfor%}
+            </table>
+        </div>
+
+        <div class="mcontainer">
+            <h2>Listeners</h2>
+            <table class="table table-striped">
+                <tr>
+                    <th>Id</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>See Page</th>
+                </tr>
+                {% for row in listener %}
+                <tr>
+                    <td>{{row.0}}</td>
+                    <td>{{row.1}}</td>
+                    <td>{{row.2}}</td>
+                    <td>
+                        <a href="/listener/{{row.0}}" class="btn btn-info btn-xs">See Listener</a>
+                    </td>
+                </tr>
+                {%endfor%}
+            </table>
+        </div>
+
+
+
+        {%endfor%}
+    </div>
+</body>
+
+<script type="text/javascript" src="{{url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
+
+<script type="text/javascript" src="{{url_for('static', filename = 'js/bootstrap.min.js')}}"></script>
+
+</html>
