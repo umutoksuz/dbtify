@@ -13,7 +13,10 @@
         <div class="well text-center">
             {%for line in user%}
             <h1>Welcome {{line.1}}</h1>
-
+            <form method="POST" action="searchsong">
+                <input type="text" name="keyword" placeholder="song title"/>
+                <button type="submit" class="btn btn-primary btn-xs">Search</button>
+            </form>
         </div>
         {%with messages = get_flashed_messages()%}
 

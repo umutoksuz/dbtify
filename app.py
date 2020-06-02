@@ -14,7 +14,121 @@ app.config['MYSQL_DB'] = config['mysql_db']
 
 mysql = MySQL(app)
 
+@app.route('/insertalbum/<string:artist_id>', methods = ['POST'])
+def insertalbum(artist_id):
+    if request.method == 'POST':
+        flash('Album is added successfully!')
+        title = request.form['title']
+        genre = request.form['genre']
+        song_title = request.form['songname']
+        cur = mysql.connection.cursor()
+        cur.execute('insert into album (genre, title, artist_id) values (%s, %s, %s)', [genre, title, artist_id])
+        mysql.connection.commit()
+        cur.execute("SELECT last_insert_id()")
+        album_id = cur.fetchall()[0]
+        cur.execute('insert into song (title, album_id) values (%s, %s)', [song_title, album_id])  
+        mysql.connection.commit()
+        cur.execute("SELECT last_insert_id()")
+        song_id = cur.fetchall()[0]
+        cur.execute('insert into songs_artists (artist_id, song_id) values (%s, %s)', [artist_id, song_id])  
+        mysql.connection.commit()
+        return redirect(url_for('artisthome', artist_id = artist_id))
 
+@app.route('/insertsong/<string:artist_id>/<string:album_id>', methods = ['POST'])
+def insertsong(artist_id, album_id):
+    if request.method == 'POST':
+        flash('Song is added successfully!')
+        title = request.form['title']
+        cur = mysql.connection.cursor()
+        cur.execute('insert into song (title, album_id) values (%s, %s)', [title, album_id])  
+        mysql.connection.commit()
+        cur.execute("SELECT last_insert_id()")
+        song_id = cur.fetchall()[0]
+        cur.execute('insert into songs_artists (artist_id, song_id) values (%s, %s)', [artist_id, song_id])  
+        mysql.connection.commit()
+        return redirect(url_for('managesongs', artist_id = artist_id, album_id = album_id))
+
+@app.route('/updatesong/<string:artist_id>/<string:album_id>', methods = ['POST'])
+def updatesong(artist_id, album_id):
+    if request.method == 'POST':
+        flash('Updated song successfully!')
+        song_id = request.form['id']
+        title = request.form['title']
+        cur = mysql.connection.cursor()
+        cur.execute('update song set title = %s where song_id = %s', [title, song_id])
+        mysql.connection.commit()
+        return redirect(url_for('managesongs', artist_id = artist_id, album_id = album_id))
+
+@app.route('/searchsong', methods = ['POST'])
+def searchsong():
+    if request.method == 'POST':
+        keyword = request.form['keyword']
+        cur = mysql.connection.cursor()
+        cur.execute("select * from song where title like " + "'%" + keyword + "%'")
+        result = cur.fetchall()
+        return render_template('search_result.html', result = result)
+
+@app.route('/addartist/<string:artist_id>/<string:album_id>', methods = ['POST'])
+def addartist(artist_id, album_id):
+    if request.method == 'POST':
+        song_id = request.form['id']
+        artist_id_add = request.form['col_id']
+        cur = mysql.connection.cursor()
+        cur.execute("select * from artist where artist_id = %s", [artist_id_add])
+        artist_data = cur.fetchall()
+        if len(artist_data) == 0:
+            flash('Artist not found!')
+            return redirect(url_for('managesongs', artist_id = artist_id, album_id = album_id))
+        cur.execute('select * from songs_artists where song_id = %s and artist_id = %s', [song_id, artist_id_add])
+        temp = cur.fetchall()
+        if len(temp) == 1:
+            flash('Artist has already been added to that song.')
+            return redirect(url_for('managesongs', artist_id = artist_id, album_id = album_id))
+        flash('Added artist successfully')
+        cur.execute('insert into songs_artists (artist_id, song_id) values (%s, %s)', [artist_id_add, song_id])
+        mysql.connection.commit()
+        return redirect(url_for('managesongs', artist_id = artist_id, album_id = album_id))
+
+@app.route('/updatealbum/<string:artist_id>', methods = ['POST'])
+def updatealbum(artist_id):
+    if request.method == 'POST':
+        flash('Updated album successfully!')
+        album_id = request.form['id']
+        title = request.form['title']
+        genre = request.form['genre']
+        cur = mysql.connection.cursor()
+        cur.execute('update album set title = %s, genre = %s where album_id = %s', [title, genre, album_id])
+        mysql.connection.commit()
+        return redirect(url_for('artisthome', artist_id = artist_id))
+
+@app.route('/deletesong/<string:artist_id>/<string:album_id>/<string:song_id>', methods = ['GET'])
+def deletesong(artist_id, album_id, song_id):
+    if request.method == 'GET':
+        flash('Deleted song successfully!')
+        cur = mysql.connection.cursor()
+        cur.execute('delete from song where song_id = %s', [song_id])
+        mysql.connection.commit()
+        return redirect(url_for('managesongs', artist_id = artist_id, album_id = album_id))
+
+@app.route('/deletealbum/<string:artist_id>/<string:album_id>', methods = ['GET'])
+def deletealbum(artist_id, album_id):
+    if request.method == 'GET':
+        flash('Deleted album successfully!')
+        cur = mysql.connection.cursor()
+        cur.execute('delete from album where album_id = %s', [album_id])
+        mysql.connection.commit()
+        return redirect(url_for('artisthome', artist_id = artist_id))
+
+@app.route('/managesongs/<string:artist_id>/<string:album_id>')
+def managesongs(artist_id, album_id):
+    cur = mysql.connection.cursor()
+    cur.execute('select * from artist where artist_id = %s', [artist_id])
+    artist_data = cur.fetchall()
+    cur.execute('select * from album where album_id = %s', [album_id])
+    album_data = cur.fetchall()
+    cur.execute('select * from song where album_id = %s', [album_id])
+    song_data = cur.fetchall()
+    return render_template('song_artist.html', artist = artist_data, album = album_data, song = song_data)
 
 @app.route('/like/<string:user_id>/<string:song_id>')
 def like(user_id, song_id):
@@ -112,9 +226,28 @@ def artistlog():
         surname = request.form['surname']
         cur = mysql.connection.cursor()
         cur.execute("SELECT * FROM artist where firstname = %s and lastname = %s", [name, surname])
-        mysql.connection.commit()
-        cur.close()
-        return redirect(url_for('homepage'))
+        artist_data = cur.fetchall()
+        if len(artist_data) == 0:
+            flash("Account not found!")
+            return render_template('index.html')
+        else:
+            artist_id = artist_data[0][0]
+            return redirect(url_for('artisthome', artist_id = artist_id))
+
+@app.route('/artisthome')
+def artisthome():
+    artist_id = request.args['artist_id']
+    cur = mysql.connection.cursor()
+    cur.execute('select * from artist where artist_id = %s', [artist_id])
+    artist_data = cur.fetchall()
+    cur.execute("select album_id, genre, title from album where artist_id = %s", [artist_id])
+    album_data = cur.fetchall()
+    cur.execute("select song.song_id, song.title, album.title from song "+
+        "left join album on song.album_id = album.album_id " +
+        "left join songs_artists on song.song_id = songs_artists.song_id where songs_artists.artist_id = %s", [artist_id])
+    song_data = cur.fetchall()
+    return render_template("home_artist.html", artist = artist_data, album = album_data, song = song_data)
+
 
 @app.route('/artistregister', methods = ['POST'])
 def artistregister():
